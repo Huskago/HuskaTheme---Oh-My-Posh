@@ -26,25 +26,28 @@ blocks:
 
       # Git
       - background: p:green
+        background_templates:
+          - "{{ if or (.Working.Changed) (.Staging.Changed) }}p:green{{ end }}"
+          - "{{ if and (gt .Ahead 0) (gt .Behind 0) }}p:orange{{ end }}"
+          - "{{ if gt .Ahead 0 }}p:purple{{ end }}"
+          - "{{ if gt .Behind 0 }}p:purple2{{ end }}"
         foreground: p:white
         powerline_symbol: 
         properties:
-          script: |
-            BRANCH=$(git branch --show-current 2>/dev/null)
-            [[ -z $BRANCH ]] && exit
-            status=$(git status --porcelain | awk '{print $1}')
-            [[ $status == *"R"* ]] && bits+='>'
-            [[ $status == *"A"* ]] && bits+='+'
-            [[ $status == *"??"* ]] && bits+='?'
-            [[ $status == *"D"* ]] && bits+='x'
-            [[ $status == *"M"* ]] && bits+='!'
-            [[ "$(git rev-list --count "@{u}..")" -gt 0 ]] && bits+='*'
-            [[ -n $bits ]] && STAT="  $bits"
-            echo -n " $BRANCH$STAT"
-          shell: bash
+          fetch_status: true
+          fetch_stash_count: true
+          fetch_upstream_icon: true
         style: powerline
-        template: " {{ .Output }} "
-        type: command
+        template: " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uF044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uF046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \uF692 {{ .StashCount }}{{ end }} "
+        type: git
+
+      # Git version
+      - background: p:green
+        foreground: p:white
+        powerline_symbol: 
+        style: powerline
+        template: " \uF1D2 {{ .MajorMinorPatch }} "
+        type: gitversion
 
       # Execution time
       - background: p:darkred
@@ -104,8 +107,41 @@ blocks:
           home_enabled: true
           display_mode: context
           fetch_package_manager: true
-        template: " \uE718 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
+        template: " \uE718{{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
         type: node
+
+      # Python
+      - background: p:darkblue
+        foreground: p:white
+        style: diamond
+        properties:
+          home_enabled: true
+          display_mode: files
+          fetch_virtual_env: true
+        template: " \uE235 {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} "
+        type: python
+
+      # Java
+      - background: p:red
+        foreground: p:white
+        style: diamond
+        properties:
+          home_enabled: true
+          display_mode: files
+          fetch_package_manager: true
+        template: " \uE738 {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+        type: java
+
+      # PHP
+      - background: p:blue
+        foreground: p:white
+        style: diamond
+        properties:
+          home_enabled: true
+          display_mode: files
+          fetch_package_manager: true
+        template: " \ue73d {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} "
+        type: php
 
       # Time
       - background: p:blue
@@ -118,10 +154,10 @@ blocks:
       - background: p:blue
         foreground: p:white
         style: diamond
-        template: "  {{ .CurrentDate | date \"02-01-2006\" }} "
+        template: "  {{ .CurrentDate | date \"02/01/2006\" }} "
         type: time
 
-        # Weather & time of day
+        # Weather
       - background: p:blue
         foreground: p:white
         type: owm
@@ -141,9 +177,13 @@ console_title_template:  {{ .Shell }} in {{ if ne .Folder "~"}} {{ .Folder
 palette:
   black: "#33395b"
   blue: "#359ddd"
+  darkblue: "#22435d"
   darkred: "#7c0a16"
   green: "#277b48"
+  purple: "#B388FF"
+  purple2: "#B388FB"
   orange: "#ff972e"
+  yellow: "#FFEB3B"
   red: "#de3142"
   white: "#efeef4"
 secondary_prompt:
