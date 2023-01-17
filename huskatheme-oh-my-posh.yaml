@@ -1,0 +1,157 @@
+# Inspired by https://github.com/JanDeDobbeleer/oh-my-posh/blob/main/themes/glowsticks.omp.yaml
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+blocks:
+  - alignment: left
+    segments:
+      # Session
+      - background: p:black
+        foreground: p:white
+        invert_powerline: true
+        powerline_symbol: 
+        style: powerline
+        template: "{{ .UserName }}@{{ .HostName }} "
+        type: session
+
+      # Path
+      - background: p:orange
+        foreground: p:white
+        powerline_symbol: 
+        properties:
+          home_icon: ""
+          style: folder
+        style: powerline
+        template: "  {{ .Path }} "
+        type: path
+
+      # Git
+      - background: p:green
+        foreground: p:white
+        powerline_symbol: 
+        properties:
+          script: |
+            BRANCH=$(git branch --show-current 2>/dev/null)
+            [[ -z $BRANCH ]] && exit
+            status=$(git status --porcelain | awk '{print $1}')
+            [[ $status == *"R"* ]] && bits+='>'
+            [[ $status == *"A"* ]] && bits+='+'
+            [[ $status == *"??"* ]] && bits+='?'
+            [[ $status == *"D"* ]] && bits+='x'
+            [[ $status == *"M"* ]] && bits+='!'
+            [[ "$(git rev-list --count "@{u}..")" -gt 0 ]] && bits+='*'
+            [[ -n $bits ]] && STAT="  $bits"
+            echo -n " $BRANCH$STAT"
+          shell: bash
+        style: powerline
+        template: " {{ .Output }} "
+        type: command
+
+      # Execution time
+      - background: p:darkred
+        foreground: p:white
+        powerline_symbol: 
+        properties:
+          always_enabled: true
+          style: round
+        style: powerline
+        template: " 羽 {{ .FormattedMs }} "
+        type: executiontime
+
+      # Exit code
+      - background: p:blue
+        background_templates:
+          - "{{ if gt .Code 0 }}p:red{{ end }}"
+        foreground: p:white
+        powerline_symbol: 
+        properties:
+          always_enabled: true
+        style: diamond
+        template: " {{ if gt .Code 0 }} {{ .Meaning }}{{ else }}{{ end }} "
+        trailing_diamond: 
+        type: exit
+    type: prompt
+  - alignment: right
+    segments:
+      # Shell
+      - background: p:black
+        foreground: p:white
+        style: plain
+        template: "<p:black,transparent></> {{ .Name }} "
+        type: shell
+
+      # Battery
+      - background_templates:
+          - '{{if eq "Charging" .State.String }}p:green{{end}}'
+          - '{{if eq "Discharging" .State.String}}p:orange{{end}}'
+        foreground: p:white
+        properties:
+          charged_icon: 
+          charging_icon: 
+          discharging_icon: " "
+        style: diamond
+        template: " {{.Templates }}{{ .Percentage}} <transparent></>"
+        templates:
+          - '{{if eq "Discharging" .State.String}}{{if lt .Percentage 11}}{{else if lt .Percentage 21}}{{else if lt .Percentage 31}}{{else if lt .Percentage 41}}{{else if lt .Percentage 51}}{{else if lt .Percentage 61}}{{else if lt .Percentage 71}}{{else if lt .Percentage 81}}{{else if lt .Percentage 91}}{{else}}{{end}}{{end}}'
+          - '{{if eq "Charging" .State.String}}{{ if lt .Percentage 21}}{{else if lt .Percentage 31}}{{else if lt .Percentage 41}}{{else if lt .Percentage 61}}{{else if lt .Percentage 81}}{{else if lt .Percentage 91}}{{else}}{{end}}{{end}}'
+        templates_logic: first_match
+        type: battery
+
+      # Node
+      - background: p:green
+        foreground: p:white
+        style: diamond
+        properties:
+          home_enabled: true
+          display_mode: context
+          fetch_package_manager: true
+        template: " \uE718 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
+        type: node
+
+      # Time
+      - background: p:blue
+        foreground: p:white
+        style: diamond
+        template: "  {{ .CurrentDate | date .Format  }} "
+        type: time
+
+      # Date
+      - background: p:blue
+        foreground: p:white
+        style: diamond
+        template: "  {{ .CurrentDate | date \"02-01-2006\" }} "
+        type: time
+
+        # Weather & time of day
+      - background: p:blue
+        foreground: p:white
+        type: owm
+        style: diamond
+        template: " {{.Weather}} ({{.Temperature}}{{.UnitIcon}}) "
+        properties:
+          apikey: 1f4aecb25d0f18d8bd7e89356360689a
+          location: Maule,FR
+          units: metric
+          http_timeout: 500
+          cache_timeout: 15
+        trailing_diamond: 
+
+    type: rprompt
+final_space: true
+console_title_template:  {{ .Shell }} in {{ if ne .Folder "~"}} {{ .Folder }}{{else}}{{end}}
+palette:
+  black: "#33395b"
+  blue: "#359ddd"
+  darkred: "#7c0a16"
+  green: "#277b48"
+  orange: "#ff972e"
+  red: "#de3142"
+  white: "#efeef4"
+secondary_prompt:
+  background: transparent
+  foreground: p:white
+  template: " "
+transient_prompt:
+  background: transparent
+  foreground: p:white
+  template: " "
+version: 2
